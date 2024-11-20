@@ -1,4 +1,3 @@
-# app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -7,7 +6,7 @@ from utils.utils import hash_password
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import User
-from db.session import AsyncSessionLocal  # Import your session maker
+from db.session import AsyncSessionLocal
 from api.endpoints import (
     auth,
     inventory,
@@ -17,23 +16,29 @@ from api.endpoints import (
     financial_reports,
 )
 from sqlalchemy.exc import IntegrityError
-
-
-
+from decouple import config  # Import from decouple
 
 async def create_admin_user(db: AsyncSession):
+    """
+    Create admin user using environment variables.
+    """
     try:
+        # Fetch admin credentials from .env
+        admin_name = config("ADMIN_NAME")
+        admin_email = config("ADMIN_EMAIL")
+        admin_password = config("ADMIN_PASSWORD")
+
         # Check if the admin already exists
-        statement = select(User).where(User.email == "olu123@gmail.com")
+        statement = select(User).where(User.email == admin_email)
         result = await db.execute(statement)
         existing_admin = result.scalars().first()
 
         if not existing_admin:
             # Create the admin user if not exists
-            hashed_password = hash_password("hikai11")
+            hashed_password = hash_password(admin_password)
             admin_user = User(
-                name="olu123",
-                email="olu123@gmail.com",  # Admin email
+                name=admin_name,
+                email=admin_email,  # Admin email
                 password_hash=hashed_password,
                 role="admin",  # Role as admin
                 unit_id=None
@@ -45,10 +50,8 @@ async def create_admin_user(db: AsyncSession):
         else:
             print("Admin user already exists.")
     except IntegrityError as e:
-        # If the error is due to a duplicate email, log it and skip creating the user
+        # Handle duplicate admin creation
         print(f"Error creating admin user: {e.orig}")
-
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -63,7 +66,6 @@ async def lifespan(app: FastAPI):
         yield
     # Shutdown logic (if needed)
     print("Application shutting down")
-
 
 # Initialize FastAPI app
 app = FastAPI(title="MaxHelp Backend", lifespan=lifespan)

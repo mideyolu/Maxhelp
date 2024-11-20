@@ -4,11 +4,11 @@ from datetime import datetime
 
 class UserCreate(BaseModel):
     name: str = Field(..., max_length=100)
-    email: EmailStr  # Required field
+    email: EmailStr
     password: str = Field(..., min_length=8)
+    gender: Optional[str] = Field(default=None, max_length=6)  # Optional gender field
     role: Optional[str] = None
     unit_id: Optional[int] = None
-    
 
 class UserLogin(BaseModel):
     name: Optional[str] = None
@@ -20,8 +20,9 @@ class UserResponse(BaseModel):
     name: str
     email: str
     role: str
+    gender: Optional[str]  # Include gender in response
     unit_id: Optional[int]
-    created_at: datetime  # Changed to datetime for better handling
+    created_at: datetime
 
     class Config:
         from_attributes = True

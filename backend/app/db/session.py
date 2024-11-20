@@ -15,6 +15,8 @@ AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_
 
 #Dependency to get async session
 
-async def get_session() -> AsyncSession:
+from typing import AsyncGenerator
+
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session

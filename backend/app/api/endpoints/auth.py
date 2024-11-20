@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from utils.utils import hash_password, verify_password, create_access_token, verify_access_token, oauth2_scheme_user
 from db.models import User, BusinessUnit, Inventory
 from schemas.auth import UserCreate, UserLogin, UserResponse, Token
-from schemas.inventory import InventoryCreate, InventoryUpdate, InventoryResponse
+from schemas.inventory import InventoryCreate
 from schemas.business_unit import BusinessUnitCreate
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
@@ -46,9 +46,6 @@ async def admin_login(
 
 @router.post("/create-account", response_model=UserResponse)
 async def create_account(user_create: UserCreate, db: AsyncSession = Depends(get_session)):
-    """
-    Create an account endpoint: Only customers can create an account.
-    """
     # Check if the user already exists
     statement = select(User).where(User.email == user_create.email)
     result = await db.execute(statement)
@@ -60,20 +57,19 @@ async def create_account(user_create: UserCreate, db: AsyncSession = Depends(get
             detail="Email already registered",
         )
 
-    # Create the user with role 'customer' by default
+    # Create the user
     user = User(
         name=user_create.name,
         email=user_create.email,
         password_hash=hash_password(user_create.password),
-        role="customer",  # Only customers can create accounts
-        unit_id=user_create.unit_id,
+        role="customer",  # Default role
+        gender=user_create.gender,  # Include gender if provided
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
     return user
-
 
 @router.post("/admin/create-business-unit", response_model=BusinessUnit)
 async def create_business_unit(
@@ -122,9 +118,6 @@ async def create_employee(
     db: AsyncSession = Depends(get_session),
     token: str = Depends(oauth2_scheme_user)
 ):
-    """
-    Create an employee: Only admins can create employees, and they must belong to a valid business unit.
-    """
     # Verify admin token
     payload = verify_access_token(token)
     if payload is None:
@@ -155,12 +148,6 @@ async def create_employee(
             detail="Email already exists",
         )
 
-    if len(user_create.password) < 8:
-        raise HTTPException(
-            status_code=403, detail="Password must be at least 8 characters long"
-        )
-
-
     # Validate business unit
     if user_create.unit_id:
         statement = select(BusinessUnit).where(BusinessUnit.id == user_create.unit_id)
@@ -180,6 +167,7 @@ async def create_employee(
         password_hash=hash_password(user_create.password),
         role="employee",
         unit_id=user_create.unit_id,
+        gender=user_create.gender,  # Include gender if provided
     )
     db.add(employee)
     await db.commit()
