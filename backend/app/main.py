@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from core.config import settings
 from db.init_db import init_db
 from utils.utils import hash_password
 from sqlalchemy.future import select
@@ -16,7 +17,7 @@ from api.endpoints import (
     financial_reports,
 )
 from sqlalchemy.exc import IntegrityError
-from decouple import config  # Import from decouple
+
 
 async def create_admin_user(db: AsyncSession):
     """
@@ -24,9 +25,9 @@ async def create_admin_user(db: AsyncSession):
     """
     try:
         # Fetch admin credentials from .env
-        admin_name = config("ADMIN_NAME")
-        admin_email = config("ADMIN_EMAIL")
-        admin_password = config("ADMIN_PASSWORD")
+        admin_name = settings.ADMIN_NAME
+        admin_email = settings.ADMIN_EMAIL
+        admin_password = settings.ADMIN_PASSWORD
 
         # Check if the admin already exists
         statement = select(User).where(User.email == admin_email)
@@ -41,7 +42,7 @@ async def create_admin_user(db: AsyncSession):
                 email=admin_email,  # Admin email
                 password_hash=hashed_password,
                 role="admin",  # Role as admin
-                unit_id=None
+                unit_id=None,
             )
             db.add(admin_user)
             await db.commit()
@@ -52,6 +53,7 @@ async def create_admin_user(db: AsyncSession):
     except IntegrityError as e:
         # Handle duplicate admin creation
         print(f"Error creating admin user: {e.orig}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -66,6 +68,7 @@ async def lifespan(app: FastAPI):
         yield
     # Shutdown logic (if needed)
     print("Application shutting down")
+
 
 # Initialize FastAPI app
 app = FastAPI(title="MaxHelp Backend", lifespan=lifespan)
@@ -84,8 +87,13 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(inventory.router, prefix="/inventory", tags=["Inventory"])
 app.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
 app.include_router(orders.router, prefix="/orders", tags=["Orders"])
-app.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
-app.include_router(financial_reports.router, prefix="/financial-reports", tags=["Financial Reports"])
+app.include_router(
+    notifications.router, prefix="/notifications", tags=["Notifications"]
+)
+app.include_router(
+    financial_reports.router, prefix="/financial-reports", tags=["Financial Reports"]
+)
+
 
 # Root endpoint
 @app.get("/")
