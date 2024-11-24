@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
+from sqlalchemy import desc
 from db.models import Feedback, User, BusinessUnit
 from db.session import get_session
+from sqlalchemy.orm import selectinload
 from schemas.feedback import FeedbackCreate, FeedbackResponse
 from utils.utils import verify_access_token, oauth2_scheme_user
 
@@ -73,7 +75,10 @@ async def create_feedback(
 
 
 
-@router.get("/", response_model=List[FeedbackResponse])
+
+
+
+@router.get("/list-feedbacks", response_model=List[FeedbackResponse])
 async def get_feedback(
     db: AsyncSession = Depends(get_session),
     token: str = Depends(oauth2_scheme_user)
@@ -100,9 +105,20 @@ async def get_feedback(
             detail="Invalid user",
         )
 
+    # Define base query
+    base_query = (
+        select(
+            Feedback,
+            User.name.label("customer_name"),
+            BusinessUnit.name.label("unit_name"),
+        )
+        .join(User, User.id == Feedback.user_id)
+        .join(BusinessUnit, BusinessUnit.id == Feedback.unit_id)
+    )
+
     # Admins can see all feedback
     if current_user.role == "admin":
-        statement = select(Feedback)
+        statement = base_query
     elif current_user.role == "employee":
         # Employees can see feedback only for their assigned unit
         if not current_user.unit_id:
@@ -110,14 +126,30 @@ async def get_feedback(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Employee is not assigned to a business unit",
             )
-        statement = select(Feedback).where(Feedback.unit_id == current_user.unit_id)
+        statement = base_query.where(Feedback.unit_id == current_user.unit_id)
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to view feedback",
         )
 
+    # Execute query
     result = await db.execute(statement)
-    feedback_list = result.scalars().all()
+    feedback_records = result.all()
+
+    # Convert result to response model
+    feedback_list = [
+        FeedbackResponse(
+            id=feedback.id,
+            user_id=feedback.user_id,
+            unit_id=feedback.unit_id,
+            comment=feedback.comment,
+            rating=feedback.rating,
+            created_at=feedback.created_at,
+            customer_name=customer_name,
+            unit_name=unit_name,
+        )
+        for feedback, customer_name, unit_name in feedback_records
+    ]
 
     return feedback_list

@@ -16,6 +16,7 @@ class FeedbackResponse(BaseModel):
     comment: str
     rating: Optional[int]
     created_at: datetime
+    customer_name: str
     unit_name: str  # Include unit name in the response
 
     class Config:

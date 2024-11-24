@@ -5,12 +5,16 @@ from sqlalchemy.future import select
 from passlib.context import CryptContext
 from utils.utils import hash_password, verify_password, create_access_token, verify_access_token, oauth2_scheme_user
 from db.models import User, BusinessUnit, Inventory
-from schemas.auth import UserCreate, UserLogin, UserResponse, Token
+from schemas.auth import UserCreate, UserLogin, UserResponse, Token, UserOut, UserUpdate, GenderCountOut
 from schemas.inventory import InventoryCreate
 from schemas.business_unit import BusinessUnitCreate
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from datetime import datetime
+from typing import List, Dict
+from sqlalchemy import func
+
+
 
 router = APIRouter()
 
@@ -43,34 +47,6 @@ async def admin_login(
     )
     return Token(access_token=access_token, token_type="bearer")
 
-
-@router.post("/create-account", response_model=UserResponse)
-async def create_account(user_create: UserCreate, db: AsyncSession = Depends(get_session)):
-    # Check if the user already exists
-    statement = select(User).where(User.email == user_create.email)
-    result = await db.execute(statement)
-    existing_user = result.scalars().first()
-
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
-
-    # Create the user
-    user = User(
-        name=user_create.name,
-        email=user_create.email,
-        password_hash=hash_password(user_create.password),
-        role="customer",  # Default role
-        gender=user_create.gender,  # Include gender if provided
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-
-    return user
-
 @router.post("/admin/create-business-unit", response_model=BusinessUnit)
 async def create_business_unit(
     business_unit_create: BusinessUnitCreate,
@@ -80,6 +56,8 @@ async def create_business_unit(
     """
     Create a business unit: Only admins can create a business unit.
     """
+
+    print(business_unit_create)
     # Verify the token to ensure the user is admin
     payload = verify_access_token(token)
     if payload is None:
@@ -110,6 +88,42 @@ async def create_business_unit(
     await db.refresh(business_unit)
 
     return business_unit
+
+
+@router.get("/admin/list-details", response_model=List[UserResponse])
+async def list_employees(
+    db: AsyncSession = Depends(get_session),
+    token: str = Depends(oauth2_scheme_user)
+):
+    """
+    List all employees: Only admins can view the list of employees.
+    """
+    # Verify the token to ensure the user is admin
+    payload = verify_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Check if the user is admin
+    statement = select(User).where(User.email == payload["sub"])
+    result = await db.execute(statement)
+    current_user = result.scalars().first()
+
+    if current_user is None or current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can view the list of employees",
+        )
+
+    # Fetch all employees
+    statement = select(User).where(User.role == "employee")
+    result = await db.execute(statement)
+    details = result.scalars().all()
+
+
+    return details
 
 
 @router.post("/admin/create-employee", response_model=UserResponse)
@@ -164,16 +178,174 @@ async def create_employee(
     employee = User(
         name=user_create.name,
         email=user_create.email,
-        password_hash=hash_password(user_create.password),
         role="employee",
-        unit_id=user_create.unit_id,
         gender=user_create.gender,  # Include gender if provided
+        unit_id=user_create.unit_id,
+        created_at=datetime.now(),
+        password_hash=hash_password(user_create.password),
     )
     db.add(employee)
     await db.commit()
     await db.refresh(employee)
 
     return employee
+
+@router.delete("/admin/delete-employee/{employee_id}", response_model=dict)
+async def delete_employee(
+    employee_id: int,
+    db: AsyncSession = Depends(get_session),
+    token: str = Depends(oauth2_scheme_user),
+):
+    # Verify admin token
+    payload = verify_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Check if the user is admin
+    statement = select(User).where(User.email == payload["sub"])
+    result = await db.execute(statement)
+    current_user = result.scalars().first()
+
+    if current_user is None or current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can delete employees",
+        )
+
+    # Fetch employee to delete
+    statement = select(User).where(User.id == employee_id, User.role == "employee")
+    result = await db.execute(statement)
+    employee = result.scalars().first()
+
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Employee not found",
+        )
+
+    # Delete employee
+    await db.delete(employee)
+    await db.commit()
+
+    return {"message": "Employee deleted successfully"}
+
+@router.put("/admin/update-employee/{employee_id}", response_model=UserResponse)
+async def update_employee(
+    employee_id: int,
+    user_update: UserUpdate,
+    db: AsyncSession = Depends(get_session),
+    token: str = Depends(oauth2_scheme_user),
+):
+    # Verify admin token
+    payload = verify_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Check if the user is admin
+    statement = select(User).where(User.email == payload["sub"])
+    result = await db.execute(statement)
+    current_user = result.scalars().first()
+
+    if current_user is None or current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can update employees",
+        )
+
+    # Fetch the employee to update
+    statement = select(User).where(User.id == employee_id, User.role == "employee")
+    result = await db.execute(statement)
+    employee = result.scalars().first()
+
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Employee not found",
+        )
+
+    # Update the employee details
+    if user_update.name:
+        employee.name = user_update.name
+    if user_update.email:
+        # Check for duplicate email
+        email_check_stmt = select(User).where(User.email == user_update.email, User.id != employee_id)
+        email_check_result = await db.execute(email_check_stmt)
+        if email_check_result.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already exists",
+            )
+        employee.email = user_update.email
+    if user_update.password:
+        employee.password_hash = hash_password(user_update.password)
+    if user_update.unit_id:
+        # Validate business unit
+        statement = select(BusinessUnit).where(BusinessUnit.id == user_update.unit_id)
+        result = await db.execute(statement)
+        business_unit = result.scalars().first()
+        if not business_unit:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Business unit not found",
+            )
+        employee.unit_id = user_update.unit_id
+    if user_update.gender:
+        employee.gender = user_update.gender
+
+    await db.commit()
+    await db.refresh(employee)
+
+    return employee
+
+
+@router.get("/admin/list-stats", response_model=dict)  # Change response_model to dict for multiple values
+async def get_admin_stats(
+    db: AsyncSession = Depends(get_session),
+    token: str = Depends(oauth2_scheme_user)
+):
+    """
+    Get the total count of employees and business units: Only admins can access this data.
+    """
+    # Verify the token to ensure the user is admin
+    payload = verify_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Check if the user is admin
+    statement = select(User).where(User.email == payload["sub"])
+    result = await db.execute(statement)
+    current_user = result.scalars().first()
+
+    if current_user is None or current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can access stats",
+        )
+
+    # Fetch the total count of employees
+    employee_count_stmt = select(func.count()).select_from(User).where(User.role == "employee")
+    employee_count_result = await db.execute(employee_count_stmt)
+    total_employees = employee_count_result.scalar()
+
+    # Fetch the total count of business units
+    business_unit_count_stmt = select(func.count()).select_from(BusinessUnit)
+    business_unit_count_result = await db.execute(business_unit_count_stmt)
+    total_business_units = business_unit_count_result.scalar()
+
+    # Return both counts
+    return {
+        "total_employees": total_employees,
+        "total_business_units": total_business_units
+    }
 
 
 @router.post("/admin/create-inventory", response_model=Inventory)

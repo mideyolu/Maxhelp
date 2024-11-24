@@ -30,3 +30,31 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str  # Fixed typo in the token field
     token_type: str
+
+
+# Define the Pydantic model for the User
+class UserOut(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+    gender: str
+    unit_id: int
+    created_at: str
+
+    class Config:
+        orm_mode = True  # Tells Pydantic to treat SQLAlchemy models as dicts
+
+# Response for gender counts
+class GenderCountOut(BaseModel):
+    male: int
+    female: int
+
+
+# Define the Pydantic model for updating an employee
+class UserUpdate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    password: str | None = None
+    unit_id: int | None = None
+    gender: str | None = None

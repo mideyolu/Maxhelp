@@ -8,11 +8,11 @@ class User(SQLModel, table=True):
     name: str = Field(nullable=False, max_length=100)
     email: str = Field(nullable=False, unique=True, max_length=150)
     role: str = Field(nullable=False, max_length=50)
-    password_hash: str = Field(nullable=False, max_length=255)  # Storing hashed passwords
-    gender: Optional[str] = Field(default=None, max_length=10)  # Optional gender field
+    gender: Optional[str] = Field(default=None, max_length=10)
     unit_id: Optional[int] = Field(default=None, foreign_key="businessunit.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     business_unit: Optional["BusinessUnit"] = Relationship(back_populates="employees")
+    password_hash: str = Field(nullable=False, max_length=255)
 
 
 class BusinessUnit(SQLModel, table=True):

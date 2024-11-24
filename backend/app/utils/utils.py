@@ -1,20 +1,27 @@
 from passlib.context import CryptContext
-from jwt import PyJWTError, PyJWT
+from jwt.exceptions import PyJWTError
+from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from db.session import settings
 from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
 
-# Password context for hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 # OAuth2 scheme for extracting token
 oauth2_scheme_user = OAuth2PasswordBearer(tokenUrl="auth/admin/login/")
 
 
-# Hash password
+
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
 def hash_password(password: str) -> str:
+    """
+    Hash a plain text password using bcrypt.
+    """
     return pwd_context.hash(password)
+
 
 
 # Verify password
@@ -26,17 +33,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict, expires_delta: timedelta) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
-    to_encode.update({"exp": expire})
-
+    to_encode.update({"exp": expire})  # Add expiration to the payload
+    # Use jwt.encode directly
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
 
 # Verify access token
 def verify_access_token(token: str) -> Optional[dict]:
     try:
-        payload = PyJWT().decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        return payload
-    except PyJWTError:
+        # Use jwt.decode directly
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload  # Decoded token payload
+    except JWTError:
         return None

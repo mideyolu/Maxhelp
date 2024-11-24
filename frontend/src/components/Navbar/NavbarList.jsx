@@ -73,6 +73,7 @@ const NavbarList = () => {
             fullWidth
             variant="gradient"
             size="sm"
+            color="blue"
             className="hidden lg:inline-block py-2 text-[1.05rem]"
             onClick={redirect}
           >
@@ -97,10 +98,11 @@ const NavbarList = () => {
           {navList}
           <div className="flex items-center gap-x-1">
             <Button
-              fullWidth
+            //   fullWidth
               variant="gradient"
+              color="blue"
               size="text-[1.05rem]"
-              className=""
+              className="w-6/2"
               onClick={redirect}
             >
               <span>Try it Now</span>

@@ -143,7 +143,6 @@ async def update_inventory_item(
     return inventory_item
 
 
-
 # Delete inventory (Admins can delete any inventory, Employees can delete only inventory in their unit)
 @router.delete("/{item_id}", response_model=dict)
 async def delete_inventory_item(
@@ -224,3 +223,63 @@ async def delete_inventory_item(
 
     return {"message": "Inventory item deleted successfully"}
 
+# Inventory stats route
+@router.get("/inventory-stats", response_model=dict)
+async def inventory_stats(
+    db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme_user)
+):
+    """
+    Endpoint to get inventory statistics, including:
+    - Total number of items with quantity < 10 (low inventory).
+    - Total number of inventory items.
+    """
+    # Verify the user's token
+    payload = verify_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Get current user from the payload
+    statement = select(User).where(User.email == payload["sub"])
+    result = await db.execute(statement)
+    current_user = result.scalars().first()
+
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Admin can view the stats for all inventory items
+    if current_user.role == "admin":
+        # Fetch total number of inventory items and low stock items
+        total_inventory_statement = select(Inventory)
+        low_inventory_statement = select(Inventory).where(Inventory.quantity < 10)
+
+        total_inventory_result = await db.execute(total_inventory_statement)
+        low_inventory_result = await db.execute(low_inventory_statement)
+
+        total_inventory_count = len(total_inventory_result.scalars().all())
+        low_inventory_count = len(low_inventory_result.scalars().all())
+
+    # Employees can view stats only for their assigned unit's inventory
+    elif current_user.role == "employee":
+        statement = select(Inventory).where(Inventory.unit_id == current_user.unit_id)
+        result = await db.execute(statement)
+        inventory_items = result.scalars().all()
+
+        total_inventory_count = len(inventory_items)
+        low_inventory_count = sum(1 for item in inventory_items if item.quantity < 10)
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Invalid role",
+        )
+
+    return {
+        "total_inventory": total_inventory_count,
+        "low_inventory_count": low_inventory_count,
+    }

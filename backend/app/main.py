@@ -7,6 +7,7 @@ from utils.utils import hash_password
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import User
+from datetime import datetime
 from db.session import AsyncSessionLocal
 from api.endpoints import (
     auth,
@@ -18,41 +19,47 @@ from api.endpoints import (
 )
 from sqlalchemy.exc import IntegrityError
 
-
-async def create_admin_user(db: AsyncSession):
+async def create_admin_user(db: AsyncSession) -> bool:
     """
-    Create admin user using environment variables.
+    Create an admin user from environment variables if not already present.
     """
     try:
+        from sqlalchemy.future import select
+        from utils.utils import hash_password
+
         # Fetch admin credentials from .env
         admin_name = settings.ADMIN_NAME
         admin_email = settings.ADMIN_EMAIL
         admin_password = settings.ADMIN_PASSWORD
 
-        # Check if the admin already exists
+        # Check if admin already exists
         statement = select(User).where(User.email == admin_email)
         result = await db.execute(statement)
         existing_admin = result.scalars().first()
 
-        if not existing_admin:
-            # Create the admin user if not exists
-            hashed_password = hash_password(admin_password)
-            admin_user = User(
-                name=admin_name,
-                email=admin_email,  # Admin email
-                password_hash=hashed_password,
-                role="admin",  # Role as admin
-                unit_id=None,
-            )
-            db.add(admin_user)
-            await db.commit()
-            await db.refresh(admin_user)
-            print("Admin user created.")
-        else:
-            print("Admin user already exists.")
+        if existing_admin:
+            return False  # Admin already exists
+
+        # Create new admin user
+
+        hashed_password = hash_password(admin_password)
+        admin_user = User(
+            name=admin_name,
+            email=admin_email,
+            password_hash=hashed_password,
+            role="admin",
+            unit_id=None,
+            gender=None,
+            created_at=datetime.utcnow()  # Explicitly set created_at if needed
+        )
+
+        db.add(admin_user)
+        await db.commit()
+        await db.refresh(admin_user)
+        return True  # Admin created successfully
     except IntegrityError as e:
-        # Handle duplicate admin creation
-        print(f"Error creating admin user: {e.orig}")
+        print(f"Error creating admin user: {e}")
+        return False
 
 
 @asynccontextmanager
@@ -62,12 +69,22 @@ async def lifespan(app: FastAPI):
     """
     # Startup logic
     async with AsyncSessionLocal() as db:
-        await init_db()  # Initialize database
+        # Initialize the database
+        await init_db()
         print("Database initialized")
-        await create_admin_user(db)  # Pass db session here to create the admin user
+
+        # Create admin user
+        admin_created = await create_admin_user(db)
+        if admin_created:
+            print("Admin user created.")
+        else:
+            print("Admin user already exists.")
+
         yield
+
     # Shutdown logic (if needed)
     print("Application shutting down")
+
 
 
 # Initialize FastAPI app
