@@ -9,8 +9,7 @@ from schemas.auth import UserCreate, UserLogin, UserResponse, Token, UserOut, Us
 from schemas.inventory import InventoryCreate
 from schemas.business_unit import BusinessUnitCreate
 from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
-from datetime import datetime
+from datetime import timedelta, datetime
 from typing import List, Dict
 from sqlalchemy import func
 
