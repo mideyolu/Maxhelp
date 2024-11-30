@@ -11,7 +11,7 @@ import HomePage from "./routes/HomePage/HomePage";
 import AboutPage from "./routes/AboutPage/AboutPage";
 import Onboarding from "./routes/Onboarding/Onboarding";
 import AdminLogin from "./routes/AdminLogin/AdminLogin";
-import AdminDashboard from "./routes/AdminDashboard/AdminDashboard";
+import Dashboard from "./routes/Dashboard/Dashboard";
 import Employee from "./routes/Employee/Employee";
 import Notification from "./routes/Notification/Notification";
 import Feedback from "./routes/Feedbacks/Feedback";
@@ -25,7 +25,6 @@ const App = () => {
 
   // Define routes where sidebar should be shown
   const showSidebarRoutes = [
-    "/admin-dashboard",
     "/dashboard",
     "/admin-employees",
     "/notifications",
@@ -41,7 +40,7 @@ const App = () => {
       "/about",
       "/onboarding",
       "/login",
-      "/dashboard",
+
     ];
 
     if (noLoginRequiredRoutes.includes(location.pathname)) {
@@ -63,7 +62,7 @@ const App = () => {
     "/admin-login",
     "/onboarding",
     "/login",
-    "/admin-dashboard",
+    "/dashboard",
     "/admin-employees",
     "/notifications",
     "/feedbacks",
@@ -88,7 +87,7 @@ const App = () => {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin-employees" element={<Employee />} />
             <Route path="/notifications" element={<Notification />} />
             <Route path="/feedbacks" element={<Feedback />} />

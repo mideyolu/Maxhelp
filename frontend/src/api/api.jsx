@@ -179,6 +179,22 @@ export const loginEmployee = (data, token) => {
     }
   );
 };
+// API call to report low inventory
+export const reportLowInventory = (inventoryId, token) => {
+  return api.post(
+    "/auth/admin/report-low-inventory", // Endpoint to report low inventory
+    { inventory_id: inventoryId }, // Send inventory_id as part of the request
+    {
+      headers: {
+        Authorization: `Bearer ${token}`, // Attach the JWT token for authorization
+        "Content-Type": "application/json", // Ensure the request is sent as JSON
+      },
+    }
+  );
+};
+
+
+
 
 
 

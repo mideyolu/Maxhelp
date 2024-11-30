@@ -78,7 +78,7 @@ const FormComponent = ({ title, fields, onSubmit, submitButtonText }) => {
       </form>
 
       <span
-        className="mt-4 text-sm absolute cursor-pointer top-[100%] md:right-[0%] lg:right-[-50%]"
+        className="mt-4 text-sm absolute cursor-pointer top-[100%] right-[5%] lg:right-[-30%]"
         onClick={handleBackToOnboarding}
       >
         Back

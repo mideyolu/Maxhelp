@@ -14,7 +14,7 @@ oauth2_scheme_user = OAuth2PasswordBearer(tokenUrl="auth/admin/login/")
 
 
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     """

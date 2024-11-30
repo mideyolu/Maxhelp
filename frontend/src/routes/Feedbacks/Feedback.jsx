@@ -10,6 +10,7 @@ const Feedback = () => {
   const [totalFeedbacks, setTotalFeedbacks] = useState(0);
   const [loading, setLoading] = useState(true); // Set loading to true initially
   const navigate = useNavigate();
+  const role = localStorage.getItem("role");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -66,7 +67,7 @@ const Feedback = () => {
       {/* Main Content */}
       <div className="w-full md:w-[75%] ml-[20%] p-8 overflow-y-auto">
         <DashboardDetails
-          title="MaxHelp Business Admin - Dashboard"
+                    title={`MaxHelp Business ${role !== "admin" ? "Employee" : "Admin"} - Dashboard`}
           subtitle="Feedback Details Page"
           summaryData={summaryData}
         />

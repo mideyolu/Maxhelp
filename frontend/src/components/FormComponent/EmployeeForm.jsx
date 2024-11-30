@@ -120,7 +120,7 @@ const EmployeeForm = ({
           {/* Role Selection */}
           <Input
             label="Role"
-            value={formData.role}
+            value={FormData.role}
             onChange={handleInputChange}
             name="role"
             type="role"
@@ -129,7 +129,7 @@ const EmployeeForm = ({
 
           {/* Unit Selection */}
           <Select
-            label="Unit ID"
+            label="Unit"
             value={formData.unit_id}
             onChange={(value) => handleSelectChange(value, "unit_id")}
             required

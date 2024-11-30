@@ -28,3 +28,10 @@ class InventoryResponse(InventoryCreate):
 
     class Config:
         from_attributes = True
+
+
+# class ReportLowInventoryRequest(BaseModel):
+#     inventory_id: int
+
+class ReportLowInventoryRequest(BaseModel):
+    inventory_name: str 

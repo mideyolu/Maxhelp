@@ -14,11 +14,12 @@ const Notification = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
     if (!token) {
       // Redirect to login if the token is missing
       toast.error("You need to be logged in to access this page.");
-      navigate("/admin-login");
+      navigate("/onboarding");
       return;
     }
 

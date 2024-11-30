@@ -27,6 +27,7 @@ const TABLE_HEAD = [
   "Update",
   "Delete", // Added delete column
 ];
+import LowInventory from "../../components/FormComponent/LowInventory";
 
 const Inventory = () => {
   const [inventoryData, setInventoryData] = useState([]); // State to hold fetched inventory data
@@ -38,10 +39,13 @@ const Inventory = () => {
   const [totalinventory, settotalInventory] = useState({
     totalInventory: 0,
   });
+    // Check if the role is admin
+  const role = localStorage.getItem("role");
   const [showForm, setShowForm] = useState(false);
   const [showUpdateForm, setShowUpdateForm] = useState(false); // Show update form state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Show delete confirmation dialog
   const [itemToDelete, setItemToDelete] = useState(null); // Item to delete
+  const [showLowInventoryForm, setShowLowInventoryForm] = useState(false); // State for toggling the low inventory form
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -59,6 +63,7 @@ const Inventory = () => {
     price: "",
     unit_id: "",
   });
+
   const navigate = useNavigate();
 
   // Fetch inventory data and stats
@@ -68,7 +73,7 @@ const Inventory = () => {
     if (!token) {
       toast.error("You need to be logged in to access this page.");
       setTimeout(() => {
-        navigate("/admin-login");
+        navigate("/onboarding");
       }, 2000);
       return;
     }
@@ -242,6 +247,7 @@ const Inventory = () => {
     }
   };
 
+
   // Open delete confirmation
   const openDeleteConfirm = (item) => {
     setItemToDelete(item);
@@ -267,11 +273,13 @@ const Inventory = () => {
     },
   ];
 
+
+
   return (
     <div className="min-h-screen flex px-4 py-2 lg:px-8 lg:py-4">
       <div className="w-full md:w-[75%] ml-[20%] p-8 overflow-y-auto">
         <DashboardDetails
-          title="MaxHelp Business Admin - Dashboard"
+          title={`MaxHelp Business ${role !== "admin" ? "Employee" : "Admin"} - Dashboard`}
           subtitle="Inventory Details Page and Statistics"
           summaryData={summaryData}
         />
@@ -289,15 +297,34 @@ const Inventory = () => {
                 </Typography>
               </div>
 
-              <div className="right absolute right-[-15%] md:right-[-70%]">
-                {/* Button to open the form */}
-                <div className="flex justify-end mb-6">
-                  <Button onClick={() => setShowForm(true)} color="blue">
-                    Create Item
-                  </Button>
+              {
+                role === "admin" && (
+                  <div className="right absolute right-[-15%] md:right-[-70%]">
+                  {/* Button to open the form */}
+                  <div className="flex justify-end mb-6">
+                    <Button onClick={() => setShowForm(true)} color="blue">
+                      Create Item
+                    </Button>
+                  </div>
                 </div>
-              </div>
+
+                )
+              }        
+              {role === "employee" && (
+                  <div className="right absolute right-[-15%] md:right-[-70%]">
+                    <div className="flex justify-end mb-6">
+                      <Button
+                        onClick={() => setShowLowInventoryForm(true)}
+                        color="blue"
+                        className="mb-4"
+                      >
+                        Report Low Inventory
+                      </Button>
+                    </div>
+                  </div>
+                )}
             </div>
+
 
             {/* Popup Form for Creating Item */}
             {showForm && (
@@ -321,6 +348,16 @@ const Inventory = () => {
                 isUpdate
               />
             )}
+
+
+          {/* Low Inventory Form Popup */}
+          {showLowInventoryForm && (
+            <LowInventory
+              onClose={() => setShowLowInventoryForm(false)} // Close the form
+              onSuccess={() => toast.success("Low inventory reported successfully")}
+              onError={() => toast.error("Failed to report low inventory")}
+            />
+          )}
 
             {/* Delete Confirmation */}
             <DeleteConfirmation
@@ -394,3 +431,13 @@ const Inventory = () => {
 };
 
 export default Inventory;
+
+
+
+
+
+
+
+
+
+

@@ -27,13 +27,13 @@ ChartJS.register(
   Legend
 );
 
-const AdminDashboard = () => {
-
+const Dashboard = () => {
   const navigate = useNavigate();
 
   // States
   const [totalSales, setTotalSales] = useState(500000);
   const [businessUnitName, setBusinessUnitName] = useState("");
+  const [role, setRole] = useState("");
   const [totalEmployee, setTotalEmployee] = useState(0);
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(true); // State to control loading
@@ -59,20 +59,39 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
+      const storedRole = localStorage.getItem("role");
+
+      if (storedRole) {
+        setRole(storedRole);
+      }
+
       if (!token) {
         toast.error("You need to be logged in to access this page.");
-        navigate("/admin-login");
+        navigate("/onboarding");
         return;
       }
 
       const response = await listStats(token);
-      setBusinessUnitsCount(response.data.total_business_units);
-      setTotalEmployee(response.data.total_employees);
+
+      // Fetch data based on role
+      if (storedRole === "admin") {
+        setBusinessUnitsCount(response.data.total_business_units);
+        setTotalEmployee(response.data.total_employees);
+      }
+
+      // Total sales is common for all roles
+      setTotalSales(response.data.total_sales);
     } catch (error) {
+      const storedRole = localStorage.getItem("role");
+      
       console.error("Error fetching dashboard data:", error);
-      toast.error(
-        error.response ? error.response.data.detail : "An error occurred"
-      );
+
+            // Fetch data based on role
+      if (storedRole === "admin") {
+        toast.error(
+          error.response ? error.response.data.detail : "An error occurred"
+        );
+      }
     } finally {
       setLoading(false); // Hide loader after fetching the data
     }
@@ -81,11 +100,7 @@ const AdminDashboard = () => {
   // Fetch data on component mount with setTimeout to simulate a loading delay
   useEffect(() => {
     setLoading(true); // Show loader when fetching data
-
-    // Simulate a loading time of 2 seconds
-    setTimeout(() => {
-      fetchDashboardData();
-    }, 2000);
+    fetchDashboardData(); // Fetch data on mount
   }, []);
 
   const handleSubmit = async (e) => {
@@ -135,38 +150,46 @@ const AdminDashboard = () => {
       <div className="w-full md:w-[75%] ml-[20%] p-8 overflow-y-auto">
         <div className="mb-8 text-left">
           <Typography variant="h3" color="blue-gray">
-            MaxHelp Business Admin - Dashboard
+            MaxHelp Business{" "}
+            {role !== "admin" ? "Employee" : "Admin"} - Dashboard
           </Typography>
         </div>
 
         {/* Summary Box */}
         <div className="mb-8 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="flex flex-col w-[100%] h-[150px] items-start justify-center p-4">
-            <Typography
-              variant="h6"
-              color="gray"
-              className="mb-2 text-left text-[0.9rem]"
-            >
-              Total Employees
-            </Typography>
-            <Typography variant="h4" color="blue-gray">
-              {totalEmployee}
-            </Typography>
-          </Card>
+          {/* Admin-specific section */}
+          {role === "admin" && (
+            <Card className="flex flex-col w-[100%] h-[150px] items-start justify-center p-4">
+              <Typography
+                variant="h6"
+                color="gray"
+                className="mb-2 text-left text-[0.9rem]"
+              >
+                Total Employees
+              </Typography>
+              <Typography variant="h4" color="blue-gray">
+                {totalEmployee}
+              </Typography>
+            </Card>
+          )}
 
-          <Card className="flex flex-col items-start h-[150px] justify-center p-4">
-            <Typography
-              variant="h6"
-              color="gray"
-              className="mb-2 text-left text-[0.9rem]"
-            >
-              Business Units
-            </Typography>
-            <Typography variant="h4" color="blue-gray">
-              {businessUnitsCount}
-            </Typography>
-          </Card>
+          {/* Admin-only Business Units */}
+          {role === "admin" && (
+            <Card className="flex flex-col items-start h-[150px] justify-center p-4">
+              <Typography
+                variant="h6"
+                color="gray"
+                className="mb-2 text-left text-[0.9rem]"
+              >
+                Business Units
+              </Typography>
+              <Typography variant="h4" color="blue-gray">
+                {businessUnitsCount}
+              </Typography>
+            </Card>
+          )}
 
+          {/* Common for all roles */}
           <Card className="flex flex-col items-start h-[150px] justify-center p-4">
             <Typography variant="h6" color="gray" className="mb-2">
               Total Sales
@@ -187,12 +210,14 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Create Unit Button */}
-        <div className="mb-8 absolute top-[25%] md:top-[15%] lg:top-[15%] right-[10%] w-[15%] text-center whitespace-nowrap">
-          <Button onClick={() => setShowForm(true)} color="blue" fullWidth>
-            Create Unit
-          </Button>
-        </div>
+        {/* Admin-only Create Unit Button */}
+        {role === "admin" && (
+          <div className="mb-8 absolute text-center top-[45%] md:top-[15%] lg:top-[15%] right-[10%] md:w-[15%] text-center whitespace-nowrap">
+            <Button onClick={() => setShowForm(true)} color="blue" fullWidth>
+              Create Unit
+            </Button>
+          </div>
+        )}
 
         {/* Form Modal */}
         {showForm && (
@@ -243,4 +268,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;

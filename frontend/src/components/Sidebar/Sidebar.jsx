@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   List,
@@ -15,6 +15,16 @@ import { IoMdLogOut } from "react-icons/io";
 const Sidebar = ({ username, onLogout }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [role , setRole] = useState('')
+
+  useEffect(()=>{
+    const storedRole = localStorage.getItem("role");
+
+    if (storedRole){
+      setRole(storedRole)
+    }
+
+  },[])
 
   const handleNavigate = (path) => {
     navigate(path);
@@ -22,8 +32,9 @@ const Sidebar = ({ username, onLogout }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("role");
     localStorage.removeItem("username");
+    localStorage.removeItem("employee_email");
     navigate("/");
   };
 
@@ -70,7 +81,7 @@ const Sidebar = ({ username, onLogout }) => {
 
         <div
           className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md flex"
-          onClick={() => handleNavigate("/admin-dashboard")}
+          onClick={() => handleNavigate("/dashboard")}
         >
           <ListItemPrefix>
             <FaHome className="text-white" />
@@ -92,17 +103,20 @@ const Sidebar = ({ username, onLogout }) => {
           </span>
         </div>
 
-        <div
-          className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md flex"
-          onClick={() => handleNavigate("/admin-employees")}
-        >
-          <ListItemPrefix>
-            <FaUsers className="text-white" />
-          </ListItemPrefix>
-          <span className={`${sidebarOpen ? "block" : "hidden"} md:block`}>
-            Employee
-          </span>
-        </div>
+        {
+          role !== "employee" && (        
+          <div
+            className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md flex"
+            onClick={() => handleNavigate("/admin-employees")}
+          >
+            <ListItemPrefix>
+              <FaUsers className="text-white" />
+            </ListItemPrefix>
+            <span className={`${sidebarOpen ? "block" : "hidden"} md:block`}>
+              Employee
+            </span>
+          </div>)
+        }
 
         <div
           className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md flex"
@@ -116,17 +130,20 @@ const Sidebar = ({ username, onLogout }) => {
           </span>
         </div>
 
-        <div
-          className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md flex"
-          onClick={() => handleNavigate("/notifications")}
-        >
-          <ListItemPrefix>
-            <FaBell className="text-white" />
-          </ListItemPrefix>
-          <span className={`${sidebarOpen ? "block" : "hidden"} md:block`}>
-            Notifications
-          </span>
-        </div>
+        {
+          role !== "employee" && (
+          <div
+            className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md flex"
+            onClick={() => handleNavigate("/notifications")}
+          >
+            <ListItemPrefix>
+              <FaBell className="text-white" />
+            </ListItemPrefix>
+            <span className={`${sidebarOpen ? "block" : "hidden"} md:block`}>
+              Notifications
+            </span>
+          </div>      
+          )}
 
         <ListItem
           className="cursor-pointer hover:bg-white hover:bg-opacity-30 transition-colors duration-300 px-4 py-2 rounded-md"

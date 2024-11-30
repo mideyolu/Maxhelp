@@ -3,11 +3,8 @@ import {
   Card,
   Typography,
   Button,
-  Input,
-  Select,
-  Option,
 } from "@material-tailwind/react";
-import { getUnitName } from "../../api/helper";
+import {getUnitName} from '../../api/helper'
 import { Pie } from "react-chartjs-2";
 import { FaTrash } from "react-icons/fa";
 import { RxUpdate } from "react-icons/rx";
@@ -32,6 +29,7 @@ const TABLE_HEAD = [
   "Role",
   "Gender",
   "Unit Name",
+
 //   "Update",
   "Delete",
 ];
@@ -130,27 +128,37 @@ const Employee = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true); // Show loader
-
+  
     try {
-      const response = await createEmployee(formData, token);
-      const newEmployee = response.data;
-
-      setEmployees((prevEmployees) =>
-        prevEmployees.map((emp) =>
-          emp.id === employeeToEdit.id ? { ...emp, ...updatedEmployee } : emp
-        )
-      );
-
+      // If editing an employee, update it, else create a new employee
+      let response;
+      if (employeeToEdit) {
+        // Update existing employee
+        response = await updateEmployee(employeeToEdit.id, formData, token); // Use employeeToEdit.id
+        const updatedEmployee = response.data;
+  
+        setEmployees((prevEmployees) =>
+          prevEmployees.map((emp) =>
+            emp.id === updatedEmployee.id ? { ...emp, ...updatedEmployee } : emp
+          )
+        );
+        toast.success("Employee updated successfully");
+      } else {
+        // Create new employee
+        response = await createEmployee(formData, token);
+        const newEmployee = response.data;
+  
+        setEmployees((prevEmployees) => [...prevEmployees, newEmployee]);
+        toast.success("Employee created successfully");
+      }
+  
       const newGenderCounts = {
         male:
-          newEmployee.gender === "Male"
-            ? genderCounts.male + 1
-            : genderCounts.male,
+          response.data.gender === "Male" ? genderCounts.male + 1 : genderCounts.male,
         female:
-          newEmployee.gender === "Female"
-            ? genderCounts.female + 1
-            : genderCounts.female,
+          response.data.gender === "Female" ? genderCounts.female + 1 : genderCounts.female,
       };
+  
       setGenderCounts(newGenderCounts);
       setGenderChartData({
         labels: ["Male", "Female"],
@@ -162,18 +170,18 @@ const Employee = () => {
           },
         ],
       });
-
-      toast.success("Employee created successfully");
     } catch (error) {
-      console.error("Error creating employee:", error);
-      toast.error("Error creating employee");
+      console.error("Error submitting employee:", error);
+      toast.error("Error processing employee");
     } finally {
       setLoading(false); // Hide loader after the operation
+      handleCancel(); // Reset form after submission
     }
   };
 
+
   const handleEditEmployee = (employee) => {
-    setEmployeeToEdit(employee);
+    setEmployeeToEdit(employee); // Ensure this is not null
     setFormData({
       name: employee.name,
       email: employee.email,
@@ -184,6 +192,7 @@ const Employee = () => {
     });
     setShowUpdateForm(true);
   };
+  
 
   const handleDeleteEmployee = (employeeId) => {
     setEmployeeToDelete(employeeId);
@@ -256,11 +265,11 @@ const Employee = () => {
   };
   const summaryData = [
     {
-      title: "Total Female Employees",
+      title: "Total Male Employees",
       value: genderCounts.male,
     },
     {
-      title: "Total Male Employees",
+      title: "Total Female Employees",
       value: genderCounts.female,
     },
   ];
@@ -326,8 +335,9 @@ const Employee = () => {
         {/* {showUpdateForm && (
           <EmployeeForm
             formData={formData}
+            setFormData={setFormData}
             onChange={handleInputChange}
-            onSubmit={handleUpdateSubmit}
+            onSubmit={handleEditEmployee}
             onClose={handleCancel}
             title="Update Employee Details"
             submitButtonText="Update"
@@ -373,7 +383,7 @@ const Employee = () => {
               <tbody>
                 {employees.map((row, index) => (
                   <tr key={row.id} className="hover:bg-blue-gray-100">
-                    <td className="border-b border-blue-gray-100 p-4 text-sm text-gray-700">
+                    <td className="border-b  border-blue-gray-100 p-4 text-sm text-gray-700">
                       {index + 1}
                     </td>
                     <td className="border-b border-blue-gray-100 p-4 text-sm text-gray-700 whitespace-nowrap">
@@ -389,15 +399,17 @@ const Employee = () => {
                       {row.gender}
                     </td>
                     <td className="border-b border-blue-gray-100 p-4 text-sm text-gray-700 whitespace-nowrap">
-                      {row.unit_id}
+                      {getUnitName(row.unit_id)}
                     </td>
-                    {/* <td className="border-b border-blue-gray-100 p-4 text-sm text-gray-700">
+{/* 
+                    <td className="border-b border-blue-gray-100 p-4 text-sm text-gray-700">
                       {/* Delete Icon *
                       <RxUpdate
                         className="text-blue-gray-700 cursor-pointer hover:text-blue-gray-600"
                         onClick={() => handleEditEmployee(row)}
                       />
-                    </td> */}
+                    </td>  */}
+
                     <td className="border-b border-blue-gray-100 p-4 text-sm text-gray-700">
                       {/* Delete Icon */}
                       <FaTrash

@@ -68,7 +68,6 @@ class FinancialReport(SQLModel, table=True):
 class Notification(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     inventory_id: int = Field(foreign_key="inventory.id")
-    message: str = Field(max_length=255)  # Max length 255
+    message: str = Field(max_length=255)
     resolved: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    resolved_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)  # Ensure the default is set correctly
