@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.session import get_session
 from sqlmodel import select
 from db.models import Inventory, User, BusinessUnit
-from schemas.inventory import InventoryUpdate, InventoryCreate  # Assuming schemas for inventory
+from schemas.inventory import InventoryUpdate, InventoryCreate, CustomerInventoryResponse  # Assuming schemas for inventory
 from utils.utils import verify_access_token, oauth2_scheme_user
 
 router = APIRouter()
@@ -55,7 +55,6 @@ async def list_inventory(
         )
 
     return inventory_items
-
 
 # Update inventory (Admins can update any, Employees can only update assigned unit's inventory)
 @router.put("/{item_id}", response_model=Inventory)
@@ -141,7 +140,6 @@ async def update_inventory_item(
     await db.refresh(inventory_item)
 
     return inventory_item
-
 
 # Delete inventory (Admins can delete any inventory, Employees can delete only inventory in their unit)
 @router.delete("/{item_id}", response_model=dict)
@@ -283,3 +281,65 @@ async def inventory_stats(
         "total_inventory": total_inventory_count,
         "low_inventory_count": low_inventory_count,
     }
+
+
+@router.get("/inventorylist", response_model=list[CustomerInventoryResponse])
+async def list_inventory_for_customers(
+    db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme_user)
+):
+    """
+    Endpoint to list all inventory items for customers, including the unit name.
+    """
+    # Verify the user's token
+    payload = verify_access_token(token)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
+
+    # Fetch the user from the database
+    statement = select(User).where(User.email == payload["sub"])
+    result = await db.execute(statement)
+    current_user = result.scalars().first()
+
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Check if the user's role is 'customer'
+    if current_user.role != "customer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Only customers can view this inventory list.",
+        )
+
+    # Fetch all inventory items with their unit names
+    statement = (
+        select(
+            Inventory.name,
+            Inventory.description,
+            Inventory.quantity,
+            Inventory.price,
+            BusinessUnit.name.label("unit_name"),
+        )
+        .join(BusinessUnit, Inventory.unit_id == BusinessUnit.id)
+    )
+    result = await db.execute(statement)
+    inventory_items = result.all()
+
+    # Format the response
+    formatted_response = [
+        CustomerInventoryResponse(
+            name=item.name,
+            description=item.description,
+            quantity=item.quantity,
+            price=item.price,
+            unit_name=item.unit_name,
+        )
+        for item in inventory_items
+    ]
+
+    return formatted_response

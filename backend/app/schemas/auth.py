@@ -7,7 +7,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     gender: Optional[str] = Field(default=None, max_length=6)  # Optional gender field
-    role: Optional[str] = None
+    role: Optional[str] = "customer"
     unit_id: Optional[int] = None
 
 class UserLogin(BaseModel):

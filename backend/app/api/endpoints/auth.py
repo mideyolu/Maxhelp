@@ -436,3 +436,59 @@ async def login(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(
+    user: UserCreate, db: AsyncSession = Depends(get_session)
+) -> UserResponse:
+    """
+    Endpoint to create a new user.
+
+    Args:
+        user (UserCreate): User creation details.
+        db (AsyncSession): Database session dependency.
+
+    Returns:
+        UserResponse: Details of the created user.
+    """
+    # Check if the email is already in use
+    statement = select(User).where(User.email == user.email)
+    result = await db.execute(statement)
+    existing_user = result.scalars().first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A user with this email already exists.",
+        )
+
+    # Hash the password
+    hashed_password = hash_password(user.password)
+
+    # Default role to 'customer' and unit_id to None for customers
+    new_user = User(
+        name=user.name,
+        email=user.email,
+        password_hash=hashed_password,
+        gender=user.gender,
+        role=user.role or "customer",  # Default role for customers
+        unit_id=user.unit_id,  # Optional field
+        created_at=datetime.now(),
+    )
+
+    # Add and commit the user to the database
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    # Return the created user's details
+    return UserResponse(
+        id=new_user.id,
+        name=new_user.name,
+        email=new_user.email,
+        role=new_user.role,
+        gender=new_user.gender,
+        unit_id=new_user.unit_id,
+        created_at=new_user.created_at,
+    )

@@ -7,7 +7,7 @@ import { IoPeopleSharp } from "react-icons/io5";
 
 const Footer = () => {
   return (
-    <footer className="bg-blue-900 text-white">
+    <footer className="bg-blue-gray-700 text-white">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Column 1: Brand */}
@@ -82,7 +82,7 @@ const Footer = () => {
         </div>
 
         {/* Footer Bottom */}
-        <div className="mt-8 border-t border-blue-900 pt-4 text-center">
+        <div className="mt-8 border-t border-blue-200 pt-4 text-center">
           <Typography className="text-sm text-blue-gray-300">
             &copy; 2024 MaxHelp Enterprises. All rights reserved.
           </Typography>

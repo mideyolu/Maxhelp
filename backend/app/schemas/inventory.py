@@ -16,6 +16,8 @@ class InventoryCreate(BaseModel):
 
 # Schema for updating inventory items
 class InventoryUpdate(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
     quantity: Optional[int] = Field(None, ge=0, description="Updated quantity of the inventory item")
     reorder_level: Optional[int] = Field(None, ge=0, description="Updated reorder level")
     price: Optional[float] = Field(None, ge=0, description="Updated price per unit")
@@ -29,9 +31,12 @@ class InventoryResponse(InventoryCreate):
     class Config:
         from_attributes = True
 
-
-# class ReportLowInventoryRequest(BaseModel):
-#     inventory_id: int
-
 class ReportLowInventoryRequest(BaseModel):
-    inventory_name: str 
+    inventory_name: str
+
+class CustomerInventoryResponse(BaseModel):
+    name: str
+    description: Optional[str]
+    quantity: int
+    price: float
+    unit_name: str

@@ -48,7 +48,8 @@ export const listEmployees = (token) => {
   return api.get("/auth/admin/list-details", {
     headers: {
       Authorization: `Bearer ${token}`, // Attach the JWT token for authorization
-    },
+      },
+      per_page: 10,
   });
 };
 // API call to delete an employee
@@ -108,6 +109,21 @@ export const fetchInventory = async (token) => {
     throw error; // Rethrow error to be handled in the calling function
   }
 };
+// API call to fetch inventory items based on user role
+export const fetchCustomerInventory = async (token) => {
+  try {
+    const response = await api.get("/inventory/inventorylist", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data; // Return the fetched data
+  } catch (error) {
+    console.error("Error fetching inventory:", error);
+    throw error; // Rethrow error to be handled in the calling function
+  }
+};
+
 // API call to update an inventory item
 export const updateInventory = (itemId, data, token) => {
   return api.put(
@@ -151,6 +167,16 @@ export const listFeedbacks = async (token) => {
     },
   });
 };
+// API call to list feedbacks
+export const listCustomerFeedbacks = async () => {
+    try {
+        const response = await api.get("/feedback/customer/list-feedbacks");
+        return response.data; // Return the feedback data
+    } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        throw error;
+    }
+};
 // API call to fetch low inventory notifications
 export const fetchLowInventoryNotifications = async (token) => {
   try {
@@ -167,7 +193,7 @@ export const fetchLowInventoryNotifications = async (token) => {
   }
 };
 // Api class for employee login
-export const loginEmployee = (data, token) => {
+export const login = (data, token) => {
   return api.post(
     "/auth/login",
     data, // Send the data as JSON
@@ -193,8 +219,43 @@ export const reportLowInventory = (inventoryId, token) => {
   );
 };
 
+// Function to create a new user (POST request to the backend)
+export const createUser = async (userData) => {
+  try {
+    const response = await axios.post("http://localhost:8000/auth/users", userData, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data; // Return the created user data
+  } catch (error) {
+    // Handle error response
+    if (error.response) {
+      throw new Error(error.response.data.detail || "An unknown error occurred.");
+    } else {
+      throw new Error(error.message || "Something went wrong.");
+    }
+  }
+};
 
+export const createFeedback = async (feedbackData) => {
+    try {
+        const token = localStorage.getItem("token");
 
+        const response = await axios.post(
+            "http://localhost:8000/feedback/create-feedback",
+            feedbackData,
+            {
+                headers: { Authorization: `Bearer ${token}` },
+            },
+        );
+        return response.data;
+    } catch (error) {
+        throw new Error(
+            error.response?.data?.detail || "Failed to create feedback",
+        );
+    }
+};
 
 
 

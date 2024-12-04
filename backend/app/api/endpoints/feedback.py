@@ -7,12 +7,12 @@ from db.models import Feedback, User, BusinessUnit
 from db.session import get_session
 from sqlalchemy.orm import selectinload
 from schemas.feedback import FeedbackCreate, FeedbackResponse
+from datetime import datetime
 from utils.utils import verify_access_token, oauth2_scheme_user
 
 router = APIRouter()
 
-
-@router.post("/create-feeback", response_model=FeedbackResponse)
+@router.post("/create-feedback", response_model=FeedbackResponse)
 async def create_feedback(
     feedback: FeedbackCreate,
     db: AsyncSession = Depends(get_session),
@@ -58,6 +58,7 @@ async def create_feedback(
         unit_id=business_unit.id,
         comment=feedback.comment,
         rating=feedback.rating,
+        created_at=datetime.now(),
     )
     db.add(new_feedback)
     await db.commit()
@@ -71,11 +72,8 @@ async def create_feedback(
         rating=new_feedback.rating,
         created_at=new_feedback.created_at,
         unit_name=business_unit.name,
+        customer_name=current_user.name
     )
-
-
-
-
 
 
 @router.get("/list-feedbacks", response_model=List[FeedbackResponse])
@@ -153,3 +151,43 @@ async def get_feedback(
     ]
 
     return feedback_list
+
+
+@router.get("/customer/list-feedbacks", response_model=List[FeedbackResponse])
+async def get_feedbacks(db: AsyncSession = Depends(get_session)):
+    """
+    Get a list of feedbacks, including customer name and unit name.
+    """
+    try:
+        # Query to fetch feedback along with customer_name and unit_name
+        statement = (
+            select(
+                Feedback,
+                User.name.label("customer_name"),
+                BusinessUnit.name.label("unit_name"),
+            )
+            .join(User, User.id == Feedback.user_id)
+            .join(BusinessUnit, BusinessUnit.id == Feedback.unit_id)
+        )
+        results = await db.execute(statement)
+        feedback_records = results.all()
+
+        # Convert to FeedbackResponse
+        feedbacks = [
+            FeedbackResponse(
+                id=record.Feedback.id,
+                user_id=record.Feedback.user_id,
+                unit_id=record.Feedback.unit_id,
+                comment=record.Feedback.comment,
+                rating=record.Feedback.rating,
+                created_at=record.Feedback.created_at,
+                customer_name=record.customer_name,
+                unit_name=record.unit_name,
+            )
+            for record in feedback_records
+        ]
+
+        return feedbacks
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

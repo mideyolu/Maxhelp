@@ -17,106 +17,118 @@ import Notification from "./routes/Notification/Notification";
 import Feedback from "./routes/Feedbacks/Feedback";
 import Inventory from "./routes/Inventory/Inventory";
 import EmployeeLogin from "./routes/EmployeeLogin/EmployeeLogin";
+import CustomerLogin from "./routes/Customer/CustomerLogin";
+import CustomerSignup from "./routes/Customer/CustomerSignup";
+import ProductList from "./routes/ProductListing/ProductListing";
 
 const App = () => {
-  const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const location = useLocation();
+    const navigate = useNavigate();
+    const [username, setUsername] = useState("");
+    const location = useLocation();
 
-  // Define routes where sidebar should be shown
-  const showSidebarRoutes = [
-    "/dashboard",
-    "/admin-employees",
-    "/notifications",
-    "/feedbacks",
-    "/inventory",
-  ];
-
-  // Fetch username from localStorage when the app loads
-  useEffect(() => {
-    // Exclude routes that should not trigger login checks
-    const noLoginRequiredRoutes = [
-      "/",
-      "/about",
-      "/onboarding",
-      "/login",
-
+    // Define routes where sidebar should be shown
+    const showSidebarRoutes = [
+        "/dashboard",
+        "/admin-employees",
+        "/notifications",
+        "/feedbacks",
+        "/inventory",
     ];
 
-    if (noLoginRequiredRoutes.includes(location.pathname)) {
-      return; // Don't perform login check for these routes
-    }
+    // Fetch username from localStorage when the app loads
+    useEffect(() => {
+        // Exclude routes that should not trigger login checks
+        const noLoginRequiredRoutes = ["/", "/about", "/onboarding", "/login"];
 
-    // Check for stored username
-    const storedUsername = localStorage.getItem("username");
-    if (storedUsername) {
-      setUsername(storedUsername);
-    } else {
-      // Redirect to login if username is not found in localStorage
-      navigate("/admin-login");
-    }
-  }, [location.pathname, navigate]);
+        if (noLoginRequiredRoutes.includes(location.pathname)) {
+            return; // Don't perform login check for these routes
+        }
 
-  // Determine whether to show the Navbar and Footer
-  const showNavbarFooter = ![
-    "/admin-login",
-    "/onboarding",
-    "/login",
-    "/dashboard",
-    "/admin-employees",
-    "/notifications",
-    "/feedbacks",
-    "/inventory",
-  ].includes(location.pathname);
+        // Check for stored username
+        const storedUsername = localStorage.getItem("username");
+        if (storedUsername) {
+            setUsername(storedUsername);
+        }
+    }, [location.pathname, navigate]);
 
-  return (
-    <div className="min-h-screen">
-      {/* Navbar: Conditionally render based on current route */}
-      {showNavbarFooter && <NavbarList />}
+    // Determine whether to show the Navbar and Footer
+    const showNavbarFooter = ![
+        "/admin-login",
+        "/onboarding",
+        "/login",
+        "/dashboard",
+        "/admin-employees",
+        "/notifications",
+        "/feedbacks",
+        "/inventory",
+        "/customer-login",
+        "/customer-signup",
+        "/product-list",
+    ].includes(location.pathname);
 
-      <div className="flex">
-        {/* Sidebar: Conditionally render on specific routes */}
-        {showSidebarRoutes.includes(location.pathname) && (
-          <Sidebar username={username} />
-        )}
+    return (
+        <div className="min-h-screen">
+            {/* Navbar: Conditionally render based on current route */}
+            {showNavbarFooter && <NavbarList />}
 
-        <div className="flex-1">
-          {/* Define Routes for the application */}
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin-employees" element={<Employee />} />
-            <Route path="/notifications" element={<Notification />} />
-            <Route path="/feedbacks" element={<Feedback />} />
-            <Route path="/inventory" element={<Inventory />} />
+            <div className="flex">
+                {/* Sidebar: Conditionally render on specific routes */}
+                {showSidebarRoutes.includes(location.pathname) && (
+                    <Sidebar username={username} />
+                )}
 
-            {/* Employee Routes */}
-            <Route path="/login" element={<EmployeeLogin />} />
-          </Routes>
+                <div className="flex-1">
+                    {/* Define Routes for the application */}
+                    <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/onboarding" element={<Onboarding />} />
+                        <Route path="/admin-login" element={<AdminLogin />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/admin-employees" element={<Employee />} />
+                        <Route
+                            path="/notifications"
+                            element={<Notification />}
+                        />
+                        <Route path="/feedbacks" element={<Feedback />} />
+                        <Route path="/inventory" element={<Inventory />} />
+
+                        {/* Employee Routes */}
+                        <Route path="/login" element={<EmployeeLogin />} />
+
+                        {/*Customer Login*/}
+                        <Route
+                            path="/customer-login"
+                            element={<CustomerLogin />}
+                        />
+                        <Route
+                            path="/customer-signup"
+                            element={<CustomerSignup />}
+                        />
+
+                        <Route path="/product-list" element={<ProductList />} />
+                    </Routes>
+                </div>
+            </div>
+
+            {/* Footer: Conditionally render based on current route */}
+            {showNavbarFooter && <Footer />}
+
+            {/* Global Toast Notification Container */}
+            <ToastContainer
+                position="top-right"
+                autoClose={2100}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
         </div>
-      </div>
-
-      {/* Footer: Conditionally render based on current route */}
-      {showNavbarFooter && <Footer />}
-
-      {/* Global Toast Notification Container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={2100}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
-    </div>
-  );
+    );
 };
 
 export default App;

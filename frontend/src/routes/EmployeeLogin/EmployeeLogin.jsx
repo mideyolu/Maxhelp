@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FormComponent from "../../components/FormComponent/FormComponent";
-import { loginEmployee } from "../../api/api";
+import { login } from "../../api/api";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader/Loader";
 
@@ -12,7 +11,7 @@ const EmployeeLogin = () => {
 
   const handleLogin = async (formData) => {
     try {
-      const response = await loginEmployee({
+      const response = await login({
         email: formData.email,
         password: formData.password,
       });
@@ -54,7 +53,7 @@ const EmployeeLogin = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1500);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -73,11 +72,11 @@ const EmployeeLogin = () => {
           submitButtonText="Login"
         />
       </div>
-      <div className="w-full md:w-1/2 bg-blue-900 flex items-center justify-center">
+      <div className="w-full md:w-1/2 flex items-center justify-center">
         <img
           src="/Login.png"
           alt="Employee Login Illustration"
-          className="w-2/3 max-w-sm md:block hidden"
+          className="w-[80%] max-w-sm md:block hidden"
         />
       </div>
     </div>

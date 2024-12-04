@@ -1,43 +1,56 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import FormComponent from "../../components/FormComponent/FormComponent";
-import { loginAdmin } from "../../api/api";
+import { createUser } from "../../api/api"; // Import the API function for creating customer
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader/Loader";
 
-const AdminLogin = () => {
-    const navigate = useNavigate();
 
+const CustomerSignup = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
 
-    const handleLogin = async (formData) => {
+    // Handle form submission
+    const handleSubmit = async (formData) => {
         try {
-            const response = await loginAdmin({
-                username: formData.username,
+            const response = await createUser({
+                name: formData.username,
+                email: formData.email,
                 password: formData.password,
+                gender: formData.gender,
+
             });
-
-            localStorage.setItem("token", response.data.access_token); // Save JWT token
-            localStorage.setItem("username", formData.username); // Save username
-            localStorage.setItem("role", "admin"); // Save role as admin
-
-            toast.success("Login Successful!");
-
-            // Wait for 2 seconds before navigating to the dashboard
+            toast.success("Customer registration successful!");
             setTimeout(() => {
-                navigate("/dashboard");
+                navigate("/customer-login");
             }, 2000);
         } catch (error) {
-            toast.error("Login Failed: Invalid credentials");
+            toast.error("Customer Registration failed: " + error.message);
+            console.log(error.message);
         }
     };
 
+    // Fields for the form
     const fields = [
         {
             label: "Username",
             name: "username",
             type: "text",
             placeholder: "Enter your username",
+            required: true,
+        },
+        {
+            label: "Email",
+            name: "email",
+            type: "email",
+            placeholder: "Enter your email",
+            required: true,
+        },
+        {
+            label: "Gender",
+            name: "gender",
+            type: "text",
+            placeholder: "Enter your gender",
             required: true,
         },
         {
@@ -52,7 +65,7 @@ const AdminLogin = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             setLoading(false);
-        }, 1000);
+        }, 1500);
 
         return () => clearTimeout(timer);
     }, []);
@@ -65,16 +78,19 @@ const AdminLogin = () => {
         <div className="min-h-screen flex flex-col justify-center md:justify-normal md:flex-row">
             <div className="w-full md:w-1/2 flex flex-col justify-center items-center px-8 py-6 sm:mt-12">
                 <FormComponent
-                    title="Admin Login"
+                    title="Customer Register"
                     fields={fields}
-                    onSubmit={handleLogin}
-                    submitButtonText="Login"
+                    onSubmit={handleSubmit}
+                    submitButtonText="Register"
                 />
+                <Link className="text-[0.8rem]" to={"/customer-login"}>
+                    Have an Account? Login
+                </Link>
             </div>
             <div className="w-full md:w-1/2 flex items-center justify-center">
                 <img
-                    src="/admin.png"
-                    alt="Admin Login Illustration"
+                    src="/customer.png"
+                    alt="Customer Register Illustration"
                     className="w-[100%] max-w-sm md:block hidden"
                 />
             </div>
@@ -82,4 +98,4 @@ const AdminLogin = () => {
     );
 };
 
-export default AdminLogin;
+export default CustomerSignup;

@@ -68,90 +68,100 @@ const Notification = () => {
   ];
 
   return (
-    <div className="min-h-screen flex px-4 py-2 lg:px-8 lg:py-4">
-      {/* Main Content */}
-      <div className="w-full md:w-[75%] ml-[20%] p-8 overflow-y-auto">
-        <DashboardDetails
-          title="MaxHelp Business Admin - Dashboard"
-          subtitle="Notification Details Page"
-          summaryData={summaryData}
-        />
+      <div className="min-h-screen flex px-4 py-2 lg:px-8 lg:py-4">
+          {/* Main Content */}
+          <div className="w-full md:w-[75%] ml-[20%] p-8 overflow-y-auto">
+              <DashboardDetails
+                  title="MaxHelp Business Admin - Dashboard"
+                  subtitle="Notification Details Page"
+                  summaryData={summaryData}
+              />
 
-        {/* Notification Grid Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-[2rem]">
-          {notifications.length > 0 ? (
-            notifications.map(
-              (
-                {
-                  id,
-                  inventory_item_name,
-                  message,
-                  business_unit_name,
-                  location,
-                  quantity,
-                  total_employees,
-                },
-                index
-              ) => (
-                <Card key={index} className="w-full shadow-lg border rounded-lg">
-                  <CardBody className="p-4">
-                    <Typography variant="h6" color="blue-gray" className="mb-2">
-                      Notification {index + 1}
-                    </Typography>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="mb-1"
-                    >
-                      <strong>Item:</strong> {inventory_item_name}
-                    </Typography>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="mb-1"
-                    >
-                      <strong>Message:</strong> {message}
-                    </Typography>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="mb-1"
-                    >
-                      <strong>Business Unit:</strong> {business_unit_name}
-                    </Typography>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="mb-1"
-                    >
-                      <strong>Location:</strong> {location}
-                    </Typography>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="mb-1"
-                    >
-                      <strong>Quantity:</strong> {quantity}
-                    </Typography>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="mb-1"
-                    >
-                      <strong>Total Employees:</strong> {total_employees}
-                    </Typography>
-                  </CardBody>
-                </Card>
-              )
-            )
-          ) : (
-            <Typography variant="small" color="gray" className="mt-4">
-              No Notification available.
-            </Typography>
-          )}
-        </div>
+              {/* Notification Grid Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-[2rem]">
+                  {notifications.length > 0 ? (
+                      notifications.map(
+                          (
+                              {
+                                  id,
+                                  inventory_item_name,
+                                  message,
+                                  business_unit_name,
+                                  location,
+                                  quantity,
+                                  total_employees,
+                              },
+                              index,
+                          ) => (
+                              <Card
+                                  key={index}
+                                  className="w-full shadow-lg border rounded-lg"
+                              >
+                                  <CardBody className="p-4">
+                                      <Typography
+                                          variant="h6"
+                                          color="blue-gray"
+                                          className="mb-2"
+                                      >
+                                          Notification {index + 1}
+                                      </Typography>
+                                      <Typography
+                                          variant="small"
+                                          color="blue-gray"
+                                          className="mb-1"
+                                      >
+                                          <strong>Item:</strong>{" "}
+                                          {inventory_item_name}
+                                      </Typography>
+                                      <Typography
+                                          variant="small"
+                                          color="blue-gray"
+                                          className="mb-1"
+                                      >
+                                          <strong>Message:</strong> {message}
+                                      </Typography>
+                                      <Typography
+                                          variant="small"
+                                          color="blue-gray"
+                                          className="mb-1"
+                                      >
+                                          <strong>Business Unit:</strong>{" "}
+                                          {business_unit_name}
+                                      </Typography>
+                                      <Typography
+                                          variant="small"
+                                          color="blue-gray"
+                                          className="mb-1"
+                                      >
+                                          <strong>Location:</strong> {location}
+                                      </Typography>
+                                      <Typography
+                                          variant="small"
+                                          color="blue-gray"
+                                          className="mb-1"
+                                      >
+                                          <strong>Quantity:</strong> {quantity}
+                                      </Typography>
+                                      <Typography
+                                          variant="small"
+                                          color="blue-gray"
+                                          className="mb-1"
+                                      >
+                                          <strong>Total Employees:</strong>{" "}
+                                          {total_employees}
+                                      </Typography>
+                                  </CardBody>
+                              </Card>
+                          ),
+                      )
+                  ) : (
+                      <Typography variant="small" color="gray" className="mt-4">
+                          No Notification available.
+                      </Typography>
+                  )}
+              </div>
+          </div>
       </div>
-    </div>
   );
 };
 
